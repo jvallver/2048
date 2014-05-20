@@ -94,12 +94,6 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         $this->exerciseRunTest();
     }
 
-    public function test_run_called_render() {
-        $this->prepareRunTest(["q"]);
-        $this->sut->expects($this->exactly(1))->method('render')->with();
-        $this->exerciseRunTest();
-    }
-
     public function test_run_called_checkForEndOfGame() {
         $this->prepareRunTestWithRenderMocked(["q"]);
         $this->sut->expects($this->exactly(1))->method('checkEndOfGame')->with();
@@ -107,9 +101,11 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     public function test_run_calledWithInvalidKey_doNotPrepareNewShift() {
-        $this->prepareRunTestWithRenderMocked(["dummy", "q"]);
-        $this->sut->expects($this->exactly(0))->method('prepareNewShift')->with();
-        $this->exerciseRunTest();
+        $this->doRunTestWithInvalidKey('prepareNewShift');
+    }
+
+    public function test_run_calledWithInvalidKey_doNotRenderBoard() {
+        $this->doRunTestWithInvalidKey('render');
     }
 
     /**
@@ -218,6 +214,12 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     /* Utils */
+    private function doRunTestWithInvalidKey($methodNotCalled) {
+        $this->prepareRunTestWithRenderMocked(["dummy", "q"]);
+        $this->sut->expects($this->exactly(0))->method($methodNotCalled)->with();
+        $this->exerciseRunTest();
+    }
+
     private function exerciseMoveTest($board) {
         $this->sut->board = $board;
     }

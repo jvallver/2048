@@ -71,7 +71,6 @@ class _2048 {
                 $this->doMove(function() {
                     $this->moveDown();
                 });
-            $this->render();
             $keyPress = $this->__getKeyPressed();
         }
     }
@@ -95,6 +94,7 @@ class _2048 {
     private function doMove($move) {
         $this->prepareNewShift();
         $move();
+        $this->render();
     }
 
     public function getRandomPosition() {
