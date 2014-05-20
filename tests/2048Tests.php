@@ -94,18 +94,22 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         $this->exerciseRunTest();
     }
 
+    public function test_run_called_render() {
+        $this->doRunTest(['q'], 'render');
+    }
+
+    public function test_run_called_prepareNewShift() {
+        $this->doRunTest(['q'], 'prepareNewShift');
+    }
+
+    public function test_run_calledWithInvalidKey_prepareOnlyFirstShift() {
+        $this->doRunTest(['dummy', 'q'], 'prepareNewShift');
+    }
+
     public function test_run_called_checkForEndOfGame() {
         $this->prepareRunTestWithRenderMocked(["q"]);
         $this->sut->expects($this->exactly(1))->method('checkEndOfGame')->with();
         $this->exerciseRunTest();
-    }
-
-    public function test_run_calledWithInvalidKey_doNotPrepareNewShift() {
-        $this->doRunTestWithInvalidKey('prepareNewShift');
-    }
-
-    public function test_run_calledWithInvalidKey_doNotRenderBoard() {
-        $this->doRunTestWithInvalidKey('render');
     }
 
     /**
@@ -214,9 +218,9 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     /* Utils */
-    private function doRunTestWithInvalidKey($methodNotCalled) {
-        $this->prepareRunTestWithRenderMocked(["dummy", "q"]);
-        $this->sut->expects($this->exactly(0))->method($methodNotCalled)->with();
+    private function doRunTest($keys, $methodToBeCalled) {
+        $this->prepareRunTestWithRenderMocked($keys);
+        $this->sut->expects($this->exactly(1))->method($methodToBeCalled)->with();
         $this->exerciseRunTest();
     }
 

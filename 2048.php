@@ -54,6 +54,7 @@ class _2048 {
 
     public function run() {
         $keyPress = "";
+        $this->prepareNewShift();
         while($keyPress != "q" && !$this->checkEndOfGame()) {
             if($keyPress == KEY_UP)
                 $this->doMove(function() {
@@ -71,6 +72,7 @@ class _2048 {
                 $this->doMove(function() {
                     $this->moveDown();
                 });
+            $this->render();
             $keyPress = $this->__getKeyPressed();
         }
     }
@@ -94,7 +96,6 @@ class _2048 {
     private function doMove($move) {
         $this->prepareNewShift();
         $move();
-        $this->render();
     }
 
     public function getRandomPosition() {
