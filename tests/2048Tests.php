@@ -81,12 +81,6 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         $this->sut->render();
     }
 
-    public function test_run_called_prepareNewShift() {
-        $this->prepareRunTest(["q"]);
-        $this->sut->expects($this->exactly(1))->method('prepareNewShift')->with();
-        $this->exerciseRunTest();
-    }
-
     /**
      * @dataProvider runTestProvider
      */
@@ -109,6 +103,12 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     public function test_run_called_checkForEndOfGame() {
         $this->prepareRunTestWithRenderMocked(["q"]);
         $this->sut->expects($this->exactly(1))->method('checkEndOfGame')->with();
+        $this->exerciseRunTest();
+    }
+
+    public function test_run_calledWithInvalidKey_doNotPrepareNewShift() {
+        $this->prepareRunTestWithRenderMocked(["dummy", "q"]);
+        $this->sut->expects($this->exactly(0))->method('prepareNewShift')->with();
         $this->exerciseRunTest();
     }
 

@@ -55,15 +55,22 @@ class _2048 {
     public function run() {
         $keyPress = "";
         while($keyPress != "q" && !$this->checkEndOfGame()) {
-            $this->prepareNewShift();
             if($keyPress == KEY_UP)
-                $this->moveUp();
+                $this->doMove(function() {
+                    $this->moveUp();
+                });
             else if($keyPress == KEY_LEFT)
-                $this->moveLeft();
+                $this->doMove(function() {
+                    $this->moveLeft();
+                });
             else if($keyPress == KEY_RIGHT)
-                $this->moveRight();
+                $this->doMove(function() {
+                    $this->moveRight();
+                });
             else if($keyPress == KEY_DOWN)
-                $this->moveDown();
+                $this->doMove(function() {
+                    $this->moveDown();
+                });
             $this->render();
             $keyPress = $this->__getKeyPressed();
         }
@@ -83,6 +90,11 @@ class _2048 {
         $line = readline("\n");
         system("clear");
         return $line;
+    }
+
+    private function doMove($move) {
+        $this->prepareNewShift();
+        $move();
     }
 
     public function getRandomPosition() {
