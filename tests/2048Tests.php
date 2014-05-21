@@ -84,26 +84,16 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     /**
      * @dataProvider runTestProvider
      */
-    public function test_run_userPushButton($string, $keyPressed, $moveUpTimesCalled, $moveDownTimesCalled, $moveLeftTimesCalled, $moveRightTimesCalled) {
+    public function test_run_userPushButton($string, $keyPressed, $board) {
         $this->prepareRunTestWithRenderMocked($keyPressed);
-        $this->sut->expects($this->any())->method('checkEndOfGame')->will($this->onConsecutiveCalls(false));
-        $this->sut->expects($this->exactly($moveUpTimesCalled))->method('moveUp')->with();
-        $this->sut->expects($this->exactly($moveDownTimesCalled))->method('moveDown')->with();
-        $this->sut->expects($this->exactly($moveLeftTimesCalled))->method('moveLeft')->with();
-        $this->sut->expects($this->exactly($moveRightTimesCalled))->method('moveRight')->with();
+        $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
+        $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
         $this->exerciseRunTest();
+        $this->assertEquals($board, $this->sut->board);
     }
 
     public function test_run_called_render() {
         $this->doRunTest(['q'], 'render');
-    }
-
-    public function test_run_called_prepareNewShift() {
-        $this->doRunTest(['q'], 'prepareNewShift');
-    }
-
-    public function test_run_calledWithInvalidKey_prepareOnlyFirstShift() {
-        $this->doRunTest(['dummy', 'q'], 'prepareNewShift');
     }
 
     public function test_run_called_checkForEndOfGame() {
@@ -200,12 +190,13 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
 
     public function runTestProvider() {
         return array(
-            array('userPushUpButton_moveUp', ["w", "q"], 1, 0, 0, 0),
-            array('userPushDownButton_moveDown', ["s", "q"], 0, 1, 0, 0),
-            array('userPushLeftButton_moveLeft', ["a", "q"], 0, 0, 1, 0),
-            array('userPushRightButton_moveRight', ["d", "q"], 0, 0, 0, 1),
-            array('userPushRightAndLeftButtons_moveRightAndLeft', ["d", "a", "q"], 0, 0, 1, 1),
-            array('userCloseApp_doNotDoAnything', ["q"], 0, 0, 0, 0)
+            array('userPushUpButton_moveUp', ["w", "q"], [[2,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushDownButton_moveDown', ["s", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [2,4,0,0]]),
+            array('userPushLeftButton_moveLeft', ["a", "q"], [[0,0,0,0], [4,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushRightButton_moveRight', ["d", "q"], [[0,0,0,0], [0,0,0,4], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightAndLeftButtons_moveRightAndLeft', ["d", "a", "q"], [[2,0,0,0], [4,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userCloseApp_doNotDoAnything', ["q"], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('calledWithInvalidKey_prepareOnlyFirstShift', ["dummy", "q"], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]])
         );
     }
 
@@ -229,7 +220,7 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     private function prepareRunTest($keyPressed) {
-        $this->sut = $this->getMock('_2048', array('prepareNewShift', '__getKeyPressed', 'moveDown', 'moveUp', 'moveRight', 'moveLeft', 'checkEndOfGame', 'render'));
+        $this->sut = $this->getMock('_2048', array('__getKeyPressed', '__rand', 'checkEndOfGame', 'render'));
         $this->sut->expects($this->any())->method('__getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
     }
 
