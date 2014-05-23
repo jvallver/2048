@@ -7,7 +7,7 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     public $sut;
 
     public function setUp() {
-        $this->sut = $this->getMock('_2048', array('__rand', '__displayBoard'));
+        $this->sut = $this->getMock('_2048', array('__rand', '__displayBoard', '__getKeyPressed'));
     }
 
     public function test_construct_called_shouldCreateBoard() {
@@ -98,9 +98,10 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         $this->exerciseRunTest();
     }
 
-    public function test_run_called_checkForEndOfGame() {
-        $this->prepareRunTest(['q']);
-        $this->sut->expects($this->exactly(1))->method('checkEndOfGame')->with();
+    public function test_run_calledWith2048TileInTheBoard_winTheGame() {
+        $this->prepareRunTest(['dummy']);
+        $this->sut->board = [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
+        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with('You Win!');
         $this->exerciseRunTest();
     }
 
@@ -216,7 +217,6 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     private function prepareRunTest($keyPressed) {
-        $this->sut = $this->getMock('_2048', array('__getKeyPressed', '__rand', '__displayBoard', 'checkEndOfGame'));
         $this->sut->expects($this->any())->method('__getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
         $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
     }

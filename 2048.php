@@ -75,6 +75,8 @@ class _2048 {
             $this->render();
             $keyPress = $this->__getKeyPressed();
         }
+        if($keyPress != "q")
+            $this->__displayBoard("You Win!");
     }
 
     //Utils
