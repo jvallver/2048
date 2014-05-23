@@ -85,19 +85,21 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
      * @dataProvider runTestProvider
      */
     public function test_run_userPushButton($string, $keyPressed, $board) {
-        $this->prepareRunTestWithRenderMocked($keyPressed);
-        $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
+        $this->prepareRunTest($keyPressed);
         $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
         $this->exerciseRunTest();
         $this->assertEquals($board, $this->sut->board);
     }
 
     public function test_run_called_render() {
-        $this->doRunTest(['q'], 'render');
+        $this->prepareRunTest(['q']);
+        $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
+        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with("← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------");
+        $this->exerciseRunTest();
     }
 
     public function test_run_called_checkForEndOfGame() {
-        $this->prepareRunTestWithRenderMocked(["q"]);
+        $this->prepareRunTest(['q']);
         $this->sut->expects($this->exactly(1))->method('checkEndOfGame')->with();
         $this->exerciseRunTest();
     }
@@ -209,19 +211,14 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     /* Utils */
-    private function doRunTest($keys, $methodToBeCalled) {
-        $this->prepareRunTestWithRenderMocked($keys);
-        $this->sut->expects($this->exactly(1))->method($methodToBeCalled)->with();
-        $this->exerciseRunTest();
-    }
-
     private function exerciseMoveTest($board) {
         $this->sut->board = $board;
     }
 
     private function prepareRunTest($keyPressed) {
-        $this->sut = $this->getMock('_2048', array('__getKeyPressed', '__rand', 'checkEndOfGame', 'render'));
+        $this->sut = $this->getMock('_2048', array('__getKeyPressed', '__rand', '__displayBoard', 'checkEndOfGame'));
         $this->sut->expects($this->any())->method('__getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
+        $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
     }
 
     private function exerciseRunTest() {
@@ -242,17 +239,6 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         $this->sut->expects($this->any())
             ->method('getRandomPosition')
             ->will($this->onConsecutiveCalls($call));
-    }
-
-    public function mockRender()
-    {
-        $this->sut->expects($this->any())->method('render')->with();
-    }
-
-    public function prepareRunTestWithRenderMocked($keyPressed)
-    {
-        $this->prepareRunTest($keyPressed);
-        $this->mockRender();
     }
 
 }
