@@ -84,24 +84,21 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     /**
      * @dataProvider runTestProvider
      */
-    public function test_run_userPushButton($string, $keyPressed, $board) {
+    public function test_run_userPushButton($string, $keyPressed, $expected) {
         $this->prepareRunTest($keyPressed);
         $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
         $this->exerciseRunTest();
-        $this->assertEquals($board, $this->sut->board);
+        $this->assertEquals($expected, $this->sut->board);
     }
 
-    public function test_run_called_render() {
-        $this->prepareRunTest(['q']);
+    /**
+     * @dataProvider displayBoardTestProvider
+     */
+    public function test_run_displayBoard($string, $board, $keyPress, $expectedDisplayCall) {
+        $this->prepareRunTest($keyPress);
+        $this->sut->board = $board;
         $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
-        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with("← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------");
-        $this->exerciseRunTest();
-    }
-
-    public function test_run_calledWith2048TileInTheBoard_winTheGame() {
-        $this->prepareRunTest(['dummy']);
-        $this->sut->board = [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
-        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with('You Win!');
+        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with($expectedDisplayCall);
         $this->exerciseRunTest();
     }
 
@@ -115,6 +112,16 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     /* Providers */
+    public function displayBoardTestProvider() {
+        return array(
+            array('withEmptyBoard_displayBoardCorrectly', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], ['q'], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
+            array('boardWithNumber_displayBoardCorrectly', [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], ['q'], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
+            array('boardWithBigNumber_displayBoardCorrectly', [[0,128,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], ['q'], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 128  |      |      |\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
+            array('boardWithNumberContainingAZero_displayBoardCorrectly', [[0,1024,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], ['q'], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 1024 |      |      |\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n| 2    |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
+            array('boardWithNumber2048Tile_showYouWinText', [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], ['dummy'], 'You Win!')
+        );
+    }
+
     public function getRandomPositionProvider() {
         return array(
             array('getRandomPosition_withEmptyBoard_returnCorrectPosition', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [2], 2),
