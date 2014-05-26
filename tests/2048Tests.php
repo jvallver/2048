@@ -15,78 +15,10 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
     }
 
     /**
-     * @dataProvider getRandomPositionProvider
-     */
-    public function test_getRandomPosition($string, $board, $positions, $expected) {
-        $this->sut->board = $board;
-        $this->mockRandFunction($positions);
-        $actual = $this->sut->getRandomPosition();
-        $this->assertEquals($actual, $expected, $string);
-    }
-
-    /**
-     * @dataProvider prepareNewShiftProvider
-     */
-    public function test_prepareNewShift($string, $randNumber, $numberPosition, $expected) {
-        $this->sut = $this->getMock('_2048', array('__rand', 'getRandomPosition'));
-        $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
-        $this->mockRandFunction([$randNumber]);
-        $this->mockRandomPosition($numberPosition);
-        $this->sut->prepareNewShift();
-        $this->assertEquals($this->sut->board, $expected, $string);
-    }
-
-    /**
-     * @dataProvider moveLeftProvider
-     */
-    public function test_moveLeft($string, $board, $expected) {
-        $this->exerciseMoveTest($board);
-        $this->sut->moveLeft();
-        $this->moveTestAssertion($expected, $string);
-    }
-
-    /**
-     * @dataProvider moveRightProvider
-     */
-    public function test_moveRight($string, $board, $expected) {
-        $this->exerciseMoveTest($board);
-        $this->sut->moveRight();
-        $this->moveTestAssertion($expected, $string);
-    }
-
-    /**
-     * @dataProvider moveUpProvider
-     */
-    public function test_moveUp($string, $board, $expected) {
-        $this->exerciseMoveTest($board);
-        $this->sut->moveUp();
-        $this->moveTestAssertion($expected, $string);
-    }
-
-    /**
-     * @dataProvider moveDownProvider
-     */
-    public function test_moveDown($string, $board, $expected) {
-        $this->exerciseMoveTest($board);
-        $this->sut->moveDown();
-        $this->moveTestAssertion($expected, $string);
-    }
-
-    /**
-     * @dataProvider renderProvider
-     */
-    public function test_render($string, $board, $expected) {
-        $this->sut->board = $board;
-        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with($expected);
-        $this->sut->render();
-    }
-
-    /**
      * @dataProvider runTestProvider
      */
-    public function test_run_userPushButton($string, $keyPressed, $expected) {
-        $this->prepareRunTest($keyPressed);
-        $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
+    public function test_run_doMove($string, $keyPressed, $board, $expected, $randReturnValues = array(0,8,1,5,0,1)) {
+        $this->prepareRunTest($keyPressed, $board, $randReturnValues);
         $this->exerciseRunTest();
         $this->assertEquals($expected, $this->sut->board);
     }
@@ -95,20 +27,9 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
      * @dataProvider displayBoardTestProvider
      */
     public function test_run_displayBoard($string, $board, $keyPress, $expectedDisplayCall) {
-        $this->prepareRunTest($keyPress);
-        $this->sut->board = $board;
-        $this->sut->expects($this->any())->method('__rand')->will($this->onConsecutiveCalls(0,8,1,5,0,1));
+        $this->prepareRunTest($keyPress, $board, array(0,8,1,5,0,1));
         $this->sut->expects($this->exactly(1))->method('__displayBoard')->with($expectedDisplayCall);
         $this->exerciseRunTest();
-    }
-
-    /**
-     * @dataProvider checkEndOfGameProvider
-     */
-    public function test_checkEndOfGame($string, $board, $expected) {
-        $this->sut->board = $board;
-        $actual = $this->sut->checkEndOfGame();
-        $this->assertEquals($actual, $expected, $string);
     }
 
     /* Providers */
@@ -122,130 +43,70 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
         );
     }
 
-    public function getRandomPositionProvider() {
-        return array(
-            array('getRandomPosition_withEmptyBoard_returnCorrectPosition', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [2], 2),
-            array('getRandomPosition_withEmptyBoardAndOtherRandomResponse_returnCorrectPosition', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [4], 4),
-            array('getRandomPosition_withCollision_returnCorrectPosition', [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [1, 4], 4),
-            array('getRandomPosition_withTwoCollisions_returnCorrectPosition', [[0,0,2,0], [4,0,0,0], [0,0,0,0], [0,0,0,0]], [2, 4, 8], 8)
-        );
-    }
-
-    public function prepareNewShiftProvider() {
-        return array(
-            array('prepareNewShift_randomReturnZero_addTwoToBoard', 0, 1, [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('prepareNewShift_randomReturnOne_addFourToBoard', 1, 1, [[0,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('prepareNewShift_firstPosition_addTwoToCorrectPlace', 0, 0, [[2,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('prepareNewShift_differentPosition_addTwoToCorrectPlace', 0, 4, [[0,0,0,0], [2,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('prepareNewShift_anotherPosition_addTwoToCorrectPlace', 0, 10, [[0,0,0,0], [0,0,0,0], [0,0,2,0], [0,0,0,0]])
-        );
-    }
-
-    public function moveLeftProvider() {
-        return array(
-            array('test_moveLeft_withOneNumber_moveTheNumberToLeft', [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[2,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withNumbersNumberInDifferentRows_moveTheNumbersToLeft', [[0,2,0,0], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[2,0,0,0], [4,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withCollision_moveTheNumbersToLeft', [[0,2,0,4], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[2,4,0,0], [4,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withCollisionThatCanBeMerged_moveTheNumbersToLeft', [[0,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withTwoCollisionThatCanBeMerged_moveTheNumbersToLeft', [[2,2,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withComplexCollisionThatCanBeMerged_moveTheNumbersToLeft', [[2,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveLeft_withAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToLeft', [[2,4,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[2,4,4,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
-        );
-    }
-
-    public function moveRightProvider() {
-        return array(
-            array('test_moveRight_withOneNumber_moveTheNumberToRight', [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withNumbersNumberInDifferentRows_moveTheNumbersToRight', [[0,2,0,0], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,2], [0,0,0,4], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withCollision_moveTheNumbersToRight', [[0,2,0,4], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[0,0,2,4], [0,0,0,4], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withCollisionThatCanBeMerged_moveTheNumbersToRight', [[0,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,4], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withTwoCollisionThatCanBeMerged_moveTheNumbersToRight', [[2,2,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,4,4], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withComplexCollisionThatCanBeMerged_moveTheNumbersToRight', [[2,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,2,4], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveRight_withAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToRight', [[2,4,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2,4,4], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
-        );
-    }
-
-    public function moveUpProvider() {
-        return array(
-            array('test_moveUp_withOneNumber_moveTheNumberToTop', [[0,0,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withNumbersNumberInDifferentColumns_moveTheNumbersToTop', [[0,0,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]], [[0,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withCollision_moveTheNumbersToTop', [[0,0,0,0], [0,2,0,0], [0,4,0,2], [0,0,0,0]], [[0,2,0,2], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withCollisionThatCanBeMerged_moveTheNumbersToTop', [[0,0,0,0], [0,2,0,0], [0,2,0,0], [0,0,0,0]], [[0,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withTwoCollisionThatCanBeMerged_moveTheNumbersToTop', [[0,2,0,0], [0,2,0,0], [0,2,0,0], [0,2,0,0]], [[0,4,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withComplexCollisionThatCanBeMerged_moveTheNumbersToTop', [[0,2,0,0], [0,2,0,0], [0,2,0,0], [0,0,0,0]], [[0,4,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('test_moveUp_withAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToTop', [[0,2,0,0], [0,4,0,0], [0,2,0,0], [0,2,0,0]], [[0,2,0,0], [0,4,0,0], [0,4,0,0], [0,0,0,0]])
-        );
-    }
-
-    public function moveDownProvider() {
-        return array(
-            array('test_moveDown_withOneNumber_moveTheNumberToBottom', [[0,0,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,2,0,0]]),
-            array('test_moveDown_withNumbersNumberInDifferentColumns_moveTheNumbersToBottom', [[0,0,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,4,0,0]]),
-            array('test_moveDown_withCollision_moveTheNumbersToBottom', [[0,0,0,0], [0,4,0,2], [0,2,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [0,4,0,0], [0,2,0,2]]),
-            array('test_moveDown_withCollisionThatCanBeMerged_moveTheNumbersToBottom', [[0,0,0,0], [0,2,0,0], [0,2,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,4,0,0]]),
-            array('test_moveDown_withTwoCollisionThatCanBeMerged_moveTheNumbersToBottom', [[0,2,0,0], [0,2,0,0], [0,2,0,0], [0,2,0,0]], [[0,0,0,0], [0,0,0,0], [0,4,0,0], [0,4,0,0]]),
-            array('test_moveDown_withComplexCollisionThatCanBeMerged_moveTheNumbersToBottom', [[0,0,0,0], [0,2,0,0], [0,2,0,0], [0,2,0,0]], [[0,0,0,0], [0,0,0,0], [0,2,0,0], [0,4,0,0]]),
-            array('test_moveDown_withAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToBottom', [[0,2,0,0], [0,2,0,0], [0,4,0,0], [0,2,0,0]], [[0,0,0,0], [0,4,0,0], [0,4,0,0], [0,2,0,0]])
-        );
-    }
-
-    public function renderProvider() {
-        return array(
-            array('withEmptyBoard_displayBoardCorrectly', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
-            array('boardWithNumber_displayBoardCorrectly', [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
-            array('boardWithBigNumber_displayBoardCorrectly', [[0,128,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 128  |      |      |\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------"),
-            array('boardWithNumberContainingAZero_displayBoardCorrectly', [[0,1024,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n|      | 1024 |      |      |\n --------------------------- \n|      | 2    |      |      |\n --------------------------- \n|      |      |      |      |\n --------------------------- \n|      |      |      |      |\n ---------------------------")
-        );
-    }
-
     public function runTestProvider() {
         return array(
-            array('userPushUpButton_moveUp', ["w", "q"], [[2,4,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]),
-            array('userPushDownButton_moveDown', ["s", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [2,4,0,0]]),
-            array('userPushLeftButton_moveLeft', ["a", "q"], [[0,0,0,0], [4,0,0,0], [2,0,0,0], [0,0,0,0]]),
-            array('userPushRightButton_moveRight', ["d", "q"], [[0,0,0,0], [0,0,0,4], [0,0,0,2], [0,0,0,0]]),
-            array('userPushRightAndLeftButtons_moveRightAndLeft', ["d", "a", "q"], [[2,0,0,0], [4,0,0,0], [2,0,0,0], [0,0,0,0]]),
-            array('userCloseApp_doNotDoAnything', ["q"], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
-            array('calledWithInvalidKey_prepareOnlyFirstShift', ["dummy", "q"], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]])
-        );
-    }
+            array('userCloseApp_prepareFirstShiftAndClose', ["q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('calledWithInvalidKey_prepareOnlyFirstShift', ["dummy", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
 
-    public function checkEndOfGameProvider() {
-        return array(
-            array('withEmptyBoard_returnFalse', [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], false),
-            array('withBoardWith2048Number_returnTrue', [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], true),
-            array('withBoardWithout2048Number_returnFalse', [[0,56,0,2], [0,128,0,0], [0,4,8,0], [0,0,0,0]], false),
+            array('userPushDownButtonWithEmptyBoard_moveTheNumberToBottom', ["s", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [2,0,0,0]]),
+            array('userPushDownButtonWithOneNumber_moveTheNumberToBottom', ["s", "q"], [[0,0,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [2,2,0,0]]),
+            array('userPushDownButtonWithNumbersNumberInDifferentColumns_moveTheNumbersToBottom', ["s", "q"], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [2,4,0,0]]),
+            array('userPushDownButtonWithCollision_moveTheNumbersToBottom', ["s", "q"], [[0,0,0,0], [0,4,0,2], [0,2,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,4,0,0], [2,2,0,2]]),
+            array('userPushDownButtonWithCollisionThatCanBeMerged_moveTheNumbersToBottom', ["s", "q"], [[0,0,0,0], [0,2,0,0], [0,2,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [2,4,0,0]]),
+            array('userPushDownButtonWithTwoCollisionThatCanBeMerged_moveTheNumbersToBottom', ["s", "q"], [[0,2,0,0], [0,2,0,0], [0,2,0,0], [0,2,0,0]], [[0,0,0,0], [0,4,0,0], [0,4,0,0], [2,4,0,0]]),
+            array('userPushDownButtonWithComplexCollisionThatCanBeMerged_moveTheNumbersToBottom', ["s", "q"], [[0,0,0,0], [0,2,0,0], [0,2,0,0], [0,2,0,0]], [[0,0,0,0], [0,4,0,0], [0,2,0,0], [2,4,0,0]]),
+            array('userPushDownButtonWithAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToBottom', ["s", "q"], [[0,2,0,0], [0,2,0,0], [0,4,0,0], [0,2,0,0]], [[4,0,0,0], [0,4,0,0], [0,4,0,0], [2,2,0,0]]),
+
+            array('userPushTopButtonWithEmptyBoard_moveTheNumberToTop', ["w", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[2,0,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithOneNumber_moveTheNumberToTop', ["w", "q"], [[0,0,0,0], [0,2,0,0], [0,0,0,0], [0,0,0,0]], [[2,2,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithNumbersNumberInDifferentColumns_moveTheNumbersToTop', ["w", "q"], [[0,0,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]], [[2,4,0,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithCollision_moveTheNumbersToTop', ["w", "q"], [[0,0,0,0], [0,0,2,0], [0,0,4,2], [0,0,0,0]], [[2,0,2,2], [0,4,4,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithCollisionThatCanBeMerged_moveTheNumbersToTop', ["w", "q"], [[0,0,0,0], [0,0,2,0], [0,2,0,0], [0,0,0,0]], [[2,2,2,0], [0,4,0,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithTwoCollisionThatCanBeMerged_moveTheNumbersToTop', ["w", "q"], [[0,2,0,0], [0,0,2,0], [0,0,2,0], [0,0,2,0]], [[2,2,4,0], [0,4,2,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithComplexCollisionThatCanBeMerged_moveTheNumbersToTop', ["w", "q"], [[0,0,2,0], [0,0,2,0], [0,0,2,0], [0,0,0,0]], [[2,0,4,0], [0,4,2,0], [0,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonWithAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToTop', ["w", "q"], [[0,0,2,0], [0,0,4,0], [0,0,2,0], [0,0,2,0]], [[2,0,2,0], [0,4,4,0], [0,0,4,0], [0,0,0,0]]),
+
+            array('userPushRightButtonWithEmptyBoard_moveRight', ["d", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithOneNumber_moveTheNumberToRight', ["d", "q"], [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,2], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithNumbersNumberInDifferentRows_moveTheNumbersToRight', ["d", "q"], [[0,2,0,0], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,2], [0,4,0,4], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithCollision_moveTheNumbersToRight', ["d", "q"], [[0,2,0,4], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[0,0,2,4], [0,4,0,4], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithCollisionThatCanBeMerged_moveTheNumbersToRight', ["d", "q"], [[0,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,4], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithTwoCollisionThatCanBeMerged_moveTheNumbersToRight', ["d", "q"], [[2,2,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,4,4], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithComplexCollisionThatCanBeMerged_moveTheNumbersToRight', ["d", "q"], [[2,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,2,4], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+            array('userPushRightButtonWithAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToRight', ["d", "q"], [[2,4,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2,4,4], [0,4,0,0], [0,0,0,2], [0,0,0,0]]),
+
+            array('userPushLeftButtonWithEmptyBoard_moveLeft', ["a", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithOneNumber_moveTheNumberToLeft', ["a", "q"], [[0,2,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[2,0,0,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithNumbersNumberInDifferentRows_moveTheNumbersToLeft', ["a", "q"], [[0,2,0,0], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[2,0,0,0], [4,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithCollision_moveTheNumbersToLeft', ["a", "q"], [[0,2,0,4], [0,0,4,0], [0,0,0,0], [0,0,0,0]], [[2,4,0,0], [4,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithCollisionThatCanBeMerged_moveTheNumbersToLeft', ["a", "q"], [[0,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,0,0,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithTwoCollisionThatCanBeMerged_moveTheNumbersToLeft', ["a", "q"], [[2,2,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,4,0,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithComplexCollisionThatCanBeMerged_moveTheNumbersToLeft', ["a", "q"], [[2,2,2,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,2,0,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushLeftButtonWithAnotherComplexCollisionThatCanBeMerged_moveTheNumbersToLeft', ["a", "q"], [[2,4,2,2], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[2,4,4,0], [0,4,0,0], [2,0,0,0], [0,0,0,0]]),
+
+            array('userPushLeftButtonButBoardHas2048Tile_dontDoTheMove', ["a"], [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2048,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushRightButtonButBoardHas2048Tile_dontDoTheMove', ["d"], [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2048,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushTopButtonButBoardHas2048Tile_dontDoTheMove', ["w"], [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2048,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+            array('userPushDownButtonButBoardHas2048Tile_dontDoTheMove', ["s"], [[0,2048,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2048,0,0], [0,0,0,0], [2,0,0,0], [0,0,0,0]]),
+
+            array('userPushLeftButtonWithDifferentRandValues_doMoveCorrectly', ["a", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [4,0,2,0], [0,0,0,0], [0,0,0,0]], array(1,4,0,6,1,0)),
+            array('userPushRightButtonWithDifferentRandValues_doMoveCorrectly', ["d", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,2,4], [0,0,0,0], [0,0,0,0]], array(1,4,0,6,1,0)),
+            array('userPushUpButtonWithDifferentRandValues_doMoveCorrectly', ["w", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[4,0,0,0], [0,0,2,0], [0,0,0,0], [0,0,0,0]], array(1,4,0,6,1,0)),
+            array('userPushBottomButtonWithDifferentRandValues_doMoveCorrectly', ["s", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,0,0,0], [0,0,2,0], [0,0,0,0], [4,0,0,0]], array(1,4,0,6,1,0)),
+
+            array('userPushRightAndLeftButtons_moveRightAndLeft', ["d", "a", "q"], [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]], [[0,2,0,0], [4,0,0,0], [2,0,0,0], [0,0,0,0]]),
         );
     }
 
     /* Utils */
-    private function exerciseMoveTest($board) {
-        $this->sut->board = $board;
-    }
-
-    private function prepareRunTest($keyPressed) {
+    private function prepareRunTest($keyPressed, $board, $randReturnValues) {
         $this->sut->expects($this->any())->method('__getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
-        $this->sut->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
+        $this->sut->board = $board;
+        $this->sut->method('__rand')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $randReturnValues));
     }
 
     private function exerciseRunTest() {
         $this->sut->run();
-    }
-
-    private function moveTestAssertion($expected, $string) {
-        $this->assertEquals($this->sut->board, $expected, $string);
-    }
-
-    private function mockRandFunction($calls) {
-        $this->sut->expects($this->any())
-            ->method('__rand')
-            ->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $calls));
-    }
-
-    private function mockRandomPosition($call) {
-        $this->sut->expects($this->any())
-            ->method('getRandomPosition')
-            ->will($this->onConsecutiveCalls($call));
     }
 
 }

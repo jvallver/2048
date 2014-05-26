@@ -96,8 +96,8 @@ class _2048 {
     }
 
     private function doMove($move) {
-        $this->prepareNewShift();
         $move();
+        $this->prepareNewShift();
     }
 
     public function getRandomPosition() {
