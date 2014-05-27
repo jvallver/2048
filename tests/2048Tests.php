@@ -6,11 +6,8 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
 
     public $sut;
 
-    public function setUp() {
-        $this->sut = $this->getMock('_2048', array('__rand', '__displayBoard', '__getKeyPressed'));
-    }
-
     public function test_construct_called_shouldCreateBoard() {
+        $this->sut = new _2048();
         $this->assertEquals($this->sut->board, [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]);
     }
 
@@ -28,7 +25,7 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
      */
     public function test_run_displayBoard($string, $board, $keyPress, $expectedDisplayCall) {
         $this->prepareRunTest($keyPress, $board, array(0,8,1,5,0,1));
-        $this->sut->expects($this->exactly(1))->method('__displayBoard')->with($expectedDisplayCall);
+        $this->helpersStub->expects($this->exactly(1))->method('displayBoard')->with($expectedDisplayCall);
         $this->exerciseRunTest();
     }
 
@@ -100,9 +97,12 @@ class _2048Tests extends PHPUnit_Framework_TestCase {
 
     /* Utils */
     private function prepareRunTest($keyPressed, $board, $randReturnValues) {
-        $this->sut->expects($this->any())->method('__getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
+        $this->helpersStub = $this->getMock('Helpers');
+        $this->helpersStub->method('rand')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $randReturnValues));
+        $this->helpersStub->method('getKeyPressed')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $keyPressed));
+        $this->helpersStub->method('rand')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $randReturnValues));
+        $this->sut = new _2048($this->helpersStub);
         $this->sut->board = $board;
-        $this->sut->method('__rand')->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $randReturnValues));
     }
 
     private function exerciseRunTest() {

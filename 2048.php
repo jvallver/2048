@@ -1,5 +1,7 @@
 <?php
 
+include("helpers.php");
+
 define('KEY_UP', 'w');
 define('KEY_LEFT', 'a');
 define('KEY_RIGHT', 'd');
@@ -7,12 +9,16 @@ define('KEY_DOWN', 's');
 
 class _2048 {
 
-    public function __construct() {
+    public function __construct($helpersStub = NULL) {
+        if($helpersStub == NULL)
+            $this->helpers = new Helpers();
+        else
+            $this->helpers = $helpersStub;
         $this->board = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
     }
 
     public function prepareNewShift() {
-        $numberToAdd = $this->__rand(0,1) == 0? 2: 4;
+        $numberToAdd = $this->helpers->rand(0,1) == 0? 2: 4;
         $position = $this->getRandomPosition();
         $row = $position/4;
         $column = $position % 4;
@@ -39,7 +45,7 @@ class _2048 {
         $template = "← a → d ↓ s ↑ w | quit - q\n\n --------------------------- \n| %-4d | %-4d | %-4d | %-4d |\n --------------------------- \n| %-4d | %-4d | %-4d | %-4d |\n --------------------------- \n| %-4d | %-4d | %-4d | %-4d |\n --------------------------- \n| %-4d | %-4d | %-4d | %-4d |\n ---------------------------";
         $template = call_user_func_array('sprintf', array_merge([$template], $this->board[0], $this->board[1], $this->board[2], $this->board[3]));
         $template = str_replace(' 0 ', '   ', $template);
-        $this->__displayBoard($template);
+        $this->helpers->displayBoard($template);
     }
 
     public function checkEndOfGame() {
@@ -73,35 +79,20 @@ class _2048 {
                     $this->moveDown();
                 });
             $this->render();
-            $keyPress = $this->__getKeyPressed();
+            $keyPress = $this->helpers->getKeyPressed();
         }
         if($keyPress != "q")
-            $this->__displayBoard("You Win!");
+            $this->helpers->displayBoard("You Win!");
     }
 
     //Utils
-    public function __displayBoard($string) {
-        echo $string;
-    }
-
-    public function __rand($min, $max) {
-        return rand($min, $max);
-    }
-
-
-    public function __getKeyPressed() {
-        $line = readline("\n");
-        system("clear");
-        return $line;
-    }
-
     private function doMove($move) {
         $move();
         $this->prepareNewShift();
     }
 
     public function getRandomPosition() {
-        $position = $this->__rand(0,15);
+        $position = $this->helpers->rand(0,15);
         if($this->board[$position/4][$position%4] == 0)
             return $position;
         return $this->getRandomPosition();
